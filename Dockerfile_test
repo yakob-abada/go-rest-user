@@ -1,0 +1,13 @@
+FROM golang:1.23 AS tester
+
+# Set working directory
+WORKDIR /app
+
+# Copy the entire project
+COPY . .
+
+# Install dependencies for testing
+RUN go mod tidy
+
+# Default to a shell for interactive debugging
+CMD ["/bin/sh"]
