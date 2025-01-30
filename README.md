@@ -25,10 +25,7 @@ POSTGRES_PASSWORD=test
 POSTGRES_DB=user_db
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
-RABBITMQ_USER=guest
-RABBITMQ_PASSWORD=guest
-RABBITMQ_HOST=rabbitmq
-RABBITMQ_PORT=5672
+RABBITMQ_URL=amqp://guest:guest@localhost:5672/
 ```
 
 ### **3️⃣ Start the Services**
