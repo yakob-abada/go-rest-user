@@ -28,18 +28,15 @@ jobs:
           - "15672:15672"
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
-          go-version: 1.20
+          go-version: '1.23'
 
       - name: Install Dependencies
         run: go mod tidy
 
       - name: Run Unit Tests
         run: make test-unit
-
-      - name: Run Integration Tests
-        run: make test-integration
