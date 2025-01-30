@@ -39,4 +39,4 @@ jobs:
         run: go mod tidy
 
       - name: Run Unit Tests
-        run: make test-unit
+        run: go test -tags=unit_test ./pkg/...
