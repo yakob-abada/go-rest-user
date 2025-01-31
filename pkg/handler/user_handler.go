@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/yakob-abada/go-rest-user/pkg/common"
 	"github.com/yakob-abada/go-rest-user/pkg/errorhandler"
 	"github.com/yakob-abada/go-rest-user/pkg/logging"
 	"github.com/yakob-abada/go-rest-user/pkg/model"
@@ -57,7 +56,6 @@ func NewUserHandler(
 // @Router /users [get]
 func (h *UserHandler) GetUsers(c echo.Context) error {
 	ctx := c.Request().Context()
-	correlationID := common.GetCorrelationID(ctx)
 
 	// Parse query parameters
 	page, err := strconv.Atoi(c.QueryParam("page"))
@@ -92,8 +90,7 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 	users, total, err := h.repo.GetUsers(ctx, page, limit, filters, sortBy, order)
 	if err != nil {
 		return h.errorHandler.HandleInternalServerError(ctx, c, "Failed to retrieve users", map[string]interface{}{
-			"error":          err.Error(),
-			"correlation_id": correlationID,
+			"error": err.Error(),
 		})
 	}
 
@@ -112,13 +109,12 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 
 	// Log request
 	h.logger.Info(ctx, "Fetched users with pagination and filters", map[string]interface{}{
-		"page":           page,
-		"limit":          limit,
-		"total_users":    total,
-		"filters":        filters,
-		"sort_by":        sortBy,
-		"order":          order,
-		"correlation_id": correlationID,
+		"page":        page,
+		"limit":       limit,
+		"total_users": total,
+		"filters":     filters,
+		"sort_by":     sortBy,
+		"order":       order,
 	})
 
 	// Return response
@@ -143,42 +139,36 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 // @Router /users [post]
 func (h *UserHandler) SaveUser(c echo.Context) error {
 	ctx := c.Request().Context()
-	correlationID := common.GetCorrelationID(ctx)
 
 	var user model.User
 	if err := c.Bind(&user); err != nil {
 		return h.errorHandler.HandleBadRequest(ctx, c, "Invalid request payload", map[string]interface{}{
-			"endpoint":       "SaveUser",
-			"error":          err.Error(),
-			"correlation_id": correlationID,
+			"endpoint": "SaveUser",
+			"error":    err.Error(),
 		})
 	}
 
 	// Validate user data
 	if err := h.validator.ValidateUser(&user); err != nil {
 		return h.errorHandler.HandleBadRequest(ctx, c, "Validation failed", map[string]interface{}{
-			"user_email":     user.Email,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
+			"user_email": user.Email,
+			"error":      err.Error(),
 		})
 	}
 
 	existingUser, err := h.repo.GetUserByEmail(ctx, user.Email)
 	if err != nil {
 		return h.errorHandler.HandleInternalServerError(ctx, c, "Database error", map[string]interface{}{
-			"user_email":     user.Email,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
+			"user_email": user.Email,
+			"error":      err.Error(),
 		})
 	}
 	if existingUser != nil {
 		h.logger.Warn(ctx, "User already exists", map[string]interface{}{
-			"user_email":     user.Email,
-			"correlation_id": correlationID,
+			"user_email": user.Email,
 		})
 		return h.errorHandler.HandleBadRequest(ctx, c, "User with this email already exists", map[string]interface{}{
-			"user_email":     user.Email,
-			"correlation_id": correlationID,
+			"user_email": user.Email,
 		})
 	}
 
@@ -186,9 +176,8 @@ func (h *UserHandler) SaveUser(c echo.Context) error {
 	hashedPassword, err := h.hasher.HashPassword(user.Password)
 	if err != nil {
 		return h.errorHandler.HandleInternalServerError(ctx, c, "Failed to hash password", map[string]interface{}{
-			"user_email":     user.Email,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
+			"user_email": user.Email,
+			"error":      err.Error(),
 		})
 	}
 	user.Password = hashedPassword
@@ -196,31 +185,27 @@ func (h *UserHandler) SaveUser(c echo.Context) error {
 	// Save the user
 	if err := h.repo.SaveUser(ctx, &user); err != nil {
 		return h.errorHandler.HandleInternalServerError(ctx, c, "Failed to save user", map[string]interface{}{
-			"user_email":     user.Email,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
+			"user_email": user.Email,
+			"error":      err.Error(),
 		})
 	}
 
 	// Publish event
 	if err := h.publisher.Publish(publisher.EventUserCreated, map[string]interface{}{
-		"user_id":        user.ID.String(),
-		"user_email":     user.Email,
-		"correlation_id": correlationID,
+		"user_id":    user.ID.String(),
+		"user_email": user.Email,
 	}); err != nil {
 		h.logger.Error(ctx, "Failed to publish event", map[string]interface{}{
-			"user_id":        user.ID.String(),
-			"event":          publisher.EventUserCreated,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
+			"user_id": user.ID.String(),
+			"event":   publisher.EventUserCreated,
+			"error":   err.Error(),
 		})
 	}
 
 	h.logger.Info(ctx, "User saved successfully", map[string]interface{}{
-		"user_id":        user.ID.String(),
-		"user_email":     user.Email,
-		"event":          publisher.EventUserCreated,
-		"correlation_id": correlationID,
+		"user_id":    user.ID.String(),
+		"user_email": user.Email,
+		"event":      publisher.EventUserCreated,
 	})
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
@@ -247,7 +232,6 @@ func (h *UserHandler) SaveUser(c echo.Context) error {
 func (h *UserHandler) UpdateUser(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.Param("id")
-	correlationID := common.GetCorrelationID(ctx)
 	var updateRequest model.UpdateUserRequest
 
 	if err := c.Bind(&updateRequest); err != nil {
@@ -273,15 +257,13 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 
 	// Publish event
 	if err := h.publisher.Publish(publisher.EventUserUpdated, map[string]interface{}{
-		"user_id":        user.ID.String(),
-		"user_email":     user.Email,
-		"correlation_id": correlationID,
+		"user_id":    user.ID.String(),
+		"user_email": user.Email,
 	}); err != nil {
 		h.logger.Error(ctx, "Failed to publish event", map[string]interface{}{
-			"user_id":        user.ID.String(),
-			"event":          publisher.EventUserUpdated,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
+			"user_id": user.ID.String(),
+			"event":   publisher.EventUserUpdated,
+			"error":   err.Error(),
 		})
 	}
 
@@ -299,44 +281,38 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 // @Router /users/{id} [delete]
 func (h *UserHandler) DeleteUser(c echo.Context) error {
 	ctx := c.Request().Context()
-	correlationID := common.GetCorrelationID(ctx)
 
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return h.errorHandler.HandleBadRequest(ctx, c, "Invalid UUID format", map[string]interface{}{
-			"endpoint":       "DeleteUser",
-			"user_id":        c.Param("id"),
-			"error":          err.Error(),
-			"correlation_id": correlationID,
+			"endpoint": "DeleteUser",
+			"user_id":  c.Param("id"),
+			"error":    err.Error(),
 		})
 	}
 
 	// Delete user from db
 	if err := h.repo.DeleteUser(ctx, id); err != nil {
 		return h.errorHandler.HandleInternalServerError(ctx, c, "Failed to delete user", map[string]interface{}{
-			"user_id":        id.String(),
-			"error":          err.Error(),
-			"correlation_id": correlationID,
+			"user_id": id.String(),
+			"error":   err.Error(),
 		})
 	}
 
 	// Publish event
 	if err := h.publisher.Publish(publisher.EventUserDeleted, map[string]interface{}{
-		"user_id":        id.String(),
-		"correlation_id": correlationID,
+		"user_id": id.String(),
 	}); err != nil {
 		h.logger.Error(ctx, "Failed to publish event", map[string]interface{}{
-			"user_id":        id.String(),
-			"event":          publisher.EventUserDeleted,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
+			"user_id": id.String(),
+			"event":   publisher.EventUserDeleted,
+			"error":   err.Error(),
 		})
 	}
 
 	h.logger.Info(ctx, "User deleted successfully", map[string]interface{}{
-		"user_id":        id.String(),
-		"event":          publisher.EventUserDeleted,
-		"correlation_id": correlationID,
+		"user_id": id.String(),
+		"event":   publisher.EventUserDeleted,
 	})
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "User deleted successfully"})
