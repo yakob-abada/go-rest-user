@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewUserHandler(db *gorm.DB, ampq *publisher.AMQPPublisher, logger logging.Logger) *handler.UserHandler {
+func NewUserHandler(db *gorm.DB, ampq publisher.Publisher, logger logging.Logger) *handler.UserHandler {
 	return handler.NewUserHandler(
 		repository.NewGormUserRepository(db),
 		logging.NewZeroLogger(),

@@ -2,8 +2,9 @@ package validator
 
 import (
 	"errors"
-	"github.com/yakob-abada/go-rest-user/pkg/model"
 	"net/mail"
+
+	"github.com/yakob-abada/go-rest-user/pkg/model"
 )
 
 // UserValidator defines an interface for user validation

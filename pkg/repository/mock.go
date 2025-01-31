@@ -2,10 +2,10 @@ package repository
 
 import (
 	"context"
-	"github.com/yakob-abada/go-rest-user/pkg/model"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
+	"github.com/yakob-abada/go-rest-user/pkg/model"
 )
 
 // MockUserRepository implements the UserRepository interface for testing

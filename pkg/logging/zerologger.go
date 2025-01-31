@@ -2,10 +2,10 @@ package logging
 
 import (
 	"context"
-	"github.com/yakob-abada/go-rest-user/pkg/common"
 	"os"
 
 	"github.com/rs/zerolog"
+	"github.com/yakob-abada/go-rest-user/pkg/common"
 )
 
 // ZeroLogger implements the Logger interface using zerolog

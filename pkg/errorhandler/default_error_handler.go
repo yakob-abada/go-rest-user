@@ -2,10 +2,10 @@ package errorhandler
 
 import (
 	"context"
-	"github.com/yakob-abada/go-rest-user/pkg/common"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/yakob-abada/go-rest-user/pkg/common"
 	"github.com/yakob-abada/go-rest-user/pkg/logging"
 )
 

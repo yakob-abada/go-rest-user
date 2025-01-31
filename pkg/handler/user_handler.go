@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/yakob-abada/go-rest-user/pkg/common"
@@ -11,8 +14,6 @@ import (
 	"github.com/yakob-abada/go-rest-user/pkg/repository"
 	"github.com/yakob-abada/go-rest-user/pkg/security"
 	"github.com/yakob-abada/go-rest-user/pkg/validator"
-	"net/http"
-	"strconv"
 )
 
 // UserHandler handles user-related requests

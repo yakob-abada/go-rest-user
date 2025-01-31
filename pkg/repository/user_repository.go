@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/google/uuid"
 	"github.com/yakob-abada/go-rest-user/pkg/model"
 )

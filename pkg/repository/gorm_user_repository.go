@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 	"errors"
-	"github.com/yakob-abada/go-rest-user/pkg/model"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	"github.com/yakob-abada/go-rest-user/pkg/model"
 	"gorm.io/gorm"
 )
 

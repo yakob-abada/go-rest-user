@@ -3,10 +3,10 @@
 package validator
 
 import (
-	"github.com/yakob-abada/go-rest-user/pkg/model"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/yakob-abada/go-rest-user/pkg/model"
 )
 
 func TestUserValidator_ValidateUser(t *testing.T) {

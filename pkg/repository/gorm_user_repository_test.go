@@ -5,7 +5,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	"github.com/yakob-abada/go-rest-user/pkg/migration"
 	"gorm.io/gorm"
 	"log"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
+	"github.com/yakob-abada/go-rest-user/pkg/migration"
 	"github.com/yakob-abada/go-rest-user/pkg/model"
 	"gorm.io/driver/postgres"
 )

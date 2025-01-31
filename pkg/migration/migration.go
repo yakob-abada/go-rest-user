@@ -1,9 +1,10 @@
 package migration
 
 import (
+	"log"
+
 	"github.com/yakob-abada/go-rest-user/pkg/model"
 	"gorm.io/gorm"
-	"log"
 )
 
 // RunMigrations applies database migrations
