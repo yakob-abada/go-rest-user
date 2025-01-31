@@ -36,6 +36,10 @@ test-unit:
 test-integration:
 	docker-compose run --rm test go test -tags=integration ./pkg/repository/
 
+# 🧪 Run Integration Tests Inside Container
+test-api:
+	docker-compose run --rm test go test -tags=integration ./tests/
+
 # 🏁 Run All Tests Inside Container
 test:
 	docker-compose run --rm test go test ./...
@@ -57,5 +61,6 @@ help:
 	@echo "  logs              - View logs"
 	@echo "  test-unit         - Run unit tests inside the container"
 	@echo "  test-integration  - Run integration tests inside the container"
+	@echo "  test-api		   - Run api tests inside the container"
 	@echo "  test              - Run all tests inside the container"
 	@echo "  clean             - Remove unused Docker resources"

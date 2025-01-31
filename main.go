@@ -29,6 +29,8 @@ func main() {
 	e.POST("/users", userHandler.SaveUser)
 	e.GET("/users", userHandler.GetUsers)
 	e.DELETE("/users/:id", userHandler.DeleteUser)
+
+	e.GET("/health", bootstrap.NewHealthHandler(db).HealthCheck)
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	ctx := context.Background()

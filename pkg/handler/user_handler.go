@@ -43,7 +43,7 @@ func NewUserHandler(
 // GetUsers retrieves users with pagination and filtering
 // @Summary Get users
 // @Description Retrieve all users with optional filters (first_name, last_name, country)
-// @Tags users
+// @Tags Users
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number (default: 1)"
@@ -132,7 +132,7 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 // SaveUser creates a new user
 // @Summary Create a new user
 // @Description Registers a new user with hashed password
-// @Tags users
+// @Tags Users
 // @Accept json
 // @Produce json
 // @Param user body model.User true "User data"
@@ -292,7 +292,7 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 // DeleteUser removes a user by ID
 // @Summary Delete a user
 // @Description Deletes a user by ID
-// @Tags users
+// @Tags Users
 // @Param id path string true "User ID"
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string

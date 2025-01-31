@@ -48,11 +48,22 @@ make start
 |--------|---------|-------------|
 | `POST` | `/users` | Create a new user |
 | `GET`  | `/users` | Get all users with pagination & filters |
-| `GET`  | `/users/{id}` | Get user by ID |
 | `PUT`  | `/users/{id}` | Update user by ID |
 | `DELETE` | `/users/{id}` | Delete user by ID |
 
-### **2️⃣ Swagger API Documentation**
+### **2️⃣ Health Check Endpoint**
+| Method | Endpoint | Description |
+|--------|---------|-------------|
+| `GET`  | `/health` | Returns API and database status |
+
+Example Response:
+```json
+{
+  "status": "healthy"
+}
+```
+
+### **3️⃣ Swagger API Documentation**
 Swagger documentation is available at:
 👉 [**http://localhost:8080/swagger/index.html**](http://localhost:8080/swagger/index.html)
 
@@ -93,6 +104,16 @@ make test-integration
 - Run **GORM migrations**
 - Execute **integration tests**
 
+### **3️⃣ Run API Integration Tests**
+```sh
+make test-api
+```
+✅ **This will:**
+- Start **PostgreSQL (Test DB)**
+- Run **GORM migrations**
+- Execute **API integration tests**
+- Test `getUsers` endpoint to ensure pagination and filtering work correctly
+
 ---
 
 ## 🔄 Stopping the Services
@@ -127,14 +148,21 @@ If not, restart it:
 docker-compose up -d rabbitmq
 ```
 
+### **3️⃣ Health Check Failing**
+Test health status:
+```sh
+curl -X GET "http://localhost:8080/health"
+```
+If the response is `{ "status": "unhealthy" }`, check if the database is reachable.
+
 ---
 
-## 💡Additional Notes
+## 💡 Additional Notes
 - The project follows **RESTful API standards**.
 - Uses **JWT authentication (if implemented)**.
 - Logs are managed using **Zerolog**.
 - All database interactions use **GORM ORM**.
 - Implements **Domain-Driven Design (DDD) pattern** for better maintainability and testability.
 
----
+
 
