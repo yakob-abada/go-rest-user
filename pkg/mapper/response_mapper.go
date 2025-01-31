@@ -4,6 +4,7 @@ import "github.com/yakob-abada/go-rest-user/pkg/model"
 
 func UserResponseMapper(user model.User) model.UserResponse {
 	return model.UserResponse{
+		ID:        user.ID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Nickname:  user.Nickname,

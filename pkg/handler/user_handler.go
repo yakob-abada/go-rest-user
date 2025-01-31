@@ -96,11 +96,11 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 	}
 
 	// Return response
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"page":  page,
-		"limit": limit,
-		"total": total,
-		"users": mapper.UsersResponseMapper(users),
+	return c.JSON(http.StatusOK, model.UserListResponseList{
+		Page:  page,
+		Limit: limit,
+		Total: total,
+		Users: mapper.UsersResponseMapper(users),
 	})
 }
 
@@ -233,7 +233,7 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, user)
+	return c.JSON(http.StatusOK, mapper.UserResponseMapper(*user))
 }
 
 // DeleteUser removes a user by ID
