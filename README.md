@@ -80,11 +80,11 @@ RabbitMQ's management interface is available at:
 - **Password:** `guest`
 
 ### **2️⃣ RabbitMQ Queues Used**
-| Queue Name | Purpose |
-|------------|---------|
-| `user_created` | Handles user creation events |
-| `user_updated` | Handles user update events |
-| `user_deleted` | Handles user deletion events |
+| Queue Name     | Purpose |
+|----------------|---------|
+| `user.created` | Handles user creation events |
+| `user.updated` | Handles user update events |
+| `user.deleted` | Handles user deletion events |
 
 ---
 
@@ -164,5 +164,8 @@ If the response is `{ "status": "unhealthy" }`, check if the database is reachab
 - All database interactions use **GORM ORM**.
 - Implements **Domain-Driven Design (DDD) pattern** for better maintainability and testability.
 
+---
 
-
+## 💡 Things to add
+- Store logs in Kibana for centralized log management.
+- Improve log structure for better readability and debugging.

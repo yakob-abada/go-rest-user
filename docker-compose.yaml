@@ -11,11 +11,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-test}   # Ensure user matches .env
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-test}
       POSTGRES_DB: ${POSTGRES_DB:-user_db}  # Ensure database name matches .env
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
+      - ./init-scripts/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-test}", "-d", "${POSTGRES_DB:-user_db}"]
       interval: 5s
@@ -73,9 +73,10 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-test}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-test}
-      POSTGRES_DB: ${POSTGRES_DB:-test_db}  # Use a dedicated test database
+      POSTGRES_DB: test_db # @todo this should be variable
       POSTGRES_HOST: postgres  # Connect to the database container
       POSTGRES_PORT: "5432"
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     volumes:
       - .:/app
 volumes:

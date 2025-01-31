@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	echoSwagger "github.com/swaggo/echo-swagger"
-	"github.com/yakob-abada/go-rest-user/pkg/publisher"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	"github.com/yakob-abada/go-rest-user/config"
 	_ "github.com/yakob-abada/go-rest-user/docs"
 	"github.com/yakob-abada/go-rest-user/pkg/bootstrap"
@@ -19,7 +18,7 @@ func main() {
 	e := echo.New()
 	db := config.InitDB()
 
-	rabbitMQ, _ := publisher.NewAMQPPublisher(os.Getenv("RABBITMQ_URL"), "user.events")
+	rabbitMQ, _ := config.InitRabbitMQ()
 	defer rabbitMQ.Close()
 
 	logger := logging.NewZeroLogger()

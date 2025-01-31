@@ -224,7 +224,7 @@ func (h *UserHandler) SaveUser(c echo.Context) error {
 		"correlation_id": correlationID,
 	})
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"id":         user.ID,
 		"first_name": user.FirstName,
 		"last_name":  user.LastName,
