@@ -169,3 +169,5 @@ If the response is `{ "status": "unhealthy" }`, check if the database is reachab
 ## 💡 Things to add
 - Store logs in Kibana for centralized log management.
 - Improve log structure for better readability and debugging.
+- Increase Test Coverage.
+- User [cursor pagination](https://planetscale.com/blog/mysql-pagination) instead of OFFSET-based pagination.

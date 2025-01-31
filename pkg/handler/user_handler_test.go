@@ -54,7 +54,7 @@ func TestGetUsers_Success(t *testing.T) {
 	var resp map[string]interface{}
 	err = json.Unmarshal(rec.Body.Bytes(), &resp)
 	assert.NoError(t, err)
-	assert.Equal(t, float64(2), resp["total_users"])
+	assert.Equal(t, float64(2), resp["total"])
 
 	// Verify mock expectations
 	mockRepo.AssertExpectations(t)

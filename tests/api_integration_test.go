@@ -81,7 +81,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// Test Get Users API (Pagination & Filters)
+// Test Get Users API (Pagination)
 func TestGetUsers(t *testing.T) {
 	// Insert test users
 	users := []model.User{
@@ -99,7 +99,33 @@ func TestGetUsers(t *testing.T) {
 	var response map[string]interface{}
 	json.Unmarshal(rec.Body.Bytes(), &response)
 
-	assert.GreaterOrEqual(t, int(response["total_users"].(float64)), 2, "Should return at least 2 users")
+	assert.GreaterOrEqual(t, int(response["total"].(float64)), 2, "Should return 2 users")
+}
+
+// Test Get Users API (Pagination & Filters)
+func TestGetUsers_WithFilters(t *testing.T) {
+	// Insert test users
+	users := []model.User{
+		{FirstName: "Alice", LastName: "Smith", Email: "alice@example.com", Password: "securepass", Country: "UK"},
+		{FirstName: "Bob", LastName: "Johnson", Email: "bob@example.com", Password: "securepass", Country: "USA"},
+	}
+	testDB.Create(&users)
+
+	req := httptest.NewRequest(http.MethodGet, "/users?page=1&limit=10&first_name=Alice", nil)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response struct {
+		Total int
+		Users []model.User `json:"users"`
+	}
+
+	json.Unmarshal(rec.Body.Bytes(), &response)
+
+	assert.GreaterOrEqual(t, response.Total, 1, "Should return 1 user")
+	assert.GreaterOrEqual(t, response.Users[0].FirstName, "Alice")
 }
 
 // Test Create User API

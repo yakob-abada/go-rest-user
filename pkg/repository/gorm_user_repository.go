@@ -65,7 +65,7 @@ func (repo *GormUserRepository) GetUsers(ctx context.Context, page, limit int, f
 		return nil, 0, err
 	}
 
-	log.Info().Int("page", page).Int("limit", limit).Int64("total_users", total).Msg("Users retrieved successfully")
+	log.Info().Int("page", page).Int("limit", limit).Int64("total", total).Msg("Users retrieved successfully")
 
 	return users, total, nil
 }

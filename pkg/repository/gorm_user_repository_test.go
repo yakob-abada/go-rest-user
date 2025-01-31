@@ -68,7 +68,7 @@ func cleanTestDatabase() {
 	testDB.Exec("TRUNCATE TABLE users RESTART IDENTITY CASCADE;")
 }
 
-func TestGormUserRepository_GetUsers(t *testing.T) {
+func TestGetUsers(t *testing.T) {
 	cleanTestDatabase()
 	repo := NewGormUserRepository(testDB)
 	ctx := context.Background()
@@ -88,7 +88,7 @@ func TestGormUserRepository_GetUsers(t *testing.T) {
 	assert.Len(t, fetchedUsers, 2)
 	assert.Equal(t, int64(2), total)
 }
-func TestGormUserRepository_GetUserByEmail(t *testing.T) {
+func TestGetUserByEmail(t *testing.T) {
 	cleanTestDatabase()
 	repo := NewGormUserRepository(testDB)
 	ctx := context.Background()
@@ -118,7 +118,7 @@ func TestGormUserRepository_GetUserByEmail(t *testing.T) {
 	assert.Nil(t, nonExistentUser)
 }
 
-func TestGormUserRepository_SaveUser(t *testing.T) {
+func TestSaveUser(t *testing.T) {
 	cleanTestDatabase()
 	repo := NewGormUserRepository(testDB)
 	ctx := context.Background()
@@ -174,7 +174,7 @@ func TestUpdateUser(t *testing.T) {
 	assert.Equal(t, "Canada", updatedUser.Country)
 }
 
-func TestGormUserRepository_DeleteUser(t *testing.T) {
+func TestDeleteUser(t *testing.T) {
 	cleanTestDatabase()
 	repo := NewGormUserRepository(testDB)
 	ctx := context.Background()

@@ -97,10 +97,10 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 
 	// Return response
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"page":        page,
-		"limit":       limit,
-		"total_users": total,
-		"users":       mapper.UsersResponseMapper(users),
+		"page":  page,
+		"limit": limit,
+		"total": total,
+		"users": mapper.UsersResponseMapper(users),
 	})
 }
 
