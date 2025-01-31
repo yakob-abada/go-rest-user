@@ -10,7 +10,7 @@ type MockPublisher struct {
 }
 
 // Publish mocks the Publish method
-func (m *MockPublisher) Publish(event string, payload map[string]interface{}) error {
+func (m *MockPublisher) Publish(event EventType, payload map[string]interface{}) error {
 	args := m.Called(event, payload)
 	return args.Error(0)
 }

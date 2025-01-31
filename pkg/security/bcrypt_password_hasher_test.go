@@ -14,7 +14,6 @@ func TestBcryptPasswordHasher_HashPassword_Success(t *testing.T) {
 
 	hashedPassword, err := hasher.HashPassword(password)
 
-	// Assertions
 	assert.NoError(t, err)
 	assert.NotEmpty(t, hashedPassword)
 	assert.NotEqual(t, password, hashedPassword, "Hashed password should not match the plain password")
@@ -28,7 +27,6 @@ func TestBcryptPasswordHasher_HashPassword_DifferentHashes(t *testing.T) {
 	hash1, err1 := hasher.HashPassword(password)
 	hash2, err2 := hasher.HashPassword(password)
 
-	// Assertions
 	assert.NoError(t, err1)
 	assert.NoError(t, err2)
 	assert.NotEqual(t, hash1, hash2, "Hashing the same password twice should produce different hashes")
@@ -43,7 +41,6 @@ func TestBcryptPasswordHasher_ComparePassword_CorrectPassword(t *testing.T) {
 
 	match := hasher.ComparePassword(hashedPassword, password)
 
-	// Assertions
 	assert.True(t, match, "Correct password should match hashed password")
 }
 
@@ -57,7 +54,6 @@ func TestBcryptPasswordHasher_ComparePassword_WrongPassword(t *testing.T) {
 
 	match := hasher.ComparePassword(hashedPassword, wrongPassword)
 
-	// Assertions
 	assert.False(t, match, "Wrong password should not match hashed password")
 }
 
@@ -68,6 +64,5 @@ func TestBcryptPasswordHasher_ComparePassword_InvalidHash(t *testing.T) {
 
 	match := hasher.ComparePassword(invalidHash, password)
 
-	// Assertions
 	assert.False(t, match, "Invalid hash format should return false")
 }

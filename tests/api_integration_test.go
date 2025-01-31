@@ -70,6 +70,7 @@ func TestMain(m *testing.M) {
 	e.POST("/users", userHandler.SaveUser)
 	e.GET("/users", userHandler.GetUsers)
 	e.DELETE("/users/:id", userHandler.DeleteUser)
+	e.PUT("/users/:id", userHandler.UpdateUser)
 
 	// Run tests
 	code := m.Run()
@@ -119,6 +120,44 @@ func TestCreateUser(t *testing.T) {
 	e.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusCreated, rec.Code)
+}
+
+// TestUpdateUser tests updating an existing user
+func TestUpdateUser(t *testing.T) {
+	// Create test user
+	user := model.User{
+		FirstName: "Mark",
+		LastName:  "Taylor",
+		Email:     "mark.taylor@example.com",
+		Password:  "securehash",
+		Country:   "Canada",
+	}
+	testDB.Create(&user)
+
+	// Make UPDATE request
+	updateData := map[string]interface{}{
+		"first_name": "Johnny",
+		"country":    "Canada",
+	}
+
+	jsonData, _ := json.Marshal(updateData)
+
+	req := httptest.NewRequest(http.MethodPut, "/users/"+user.ID.String(), bytes.NewReader(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var updatedUser model.User
+	err := json.Unmarshal(rec.Body.Bytes(), &updatedUser)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "Johnny", updatedUser.FirstName)
+	assert.Equal(t, "Canada", updatedUser.Country)
+	assert.Equal(t, user.Email, updatedUser.Email) // Email should remain unchanged
+	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
 // Test Delete User API

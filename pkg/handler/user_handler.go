@@ -203,15 +203,14 @@ func (h *UserHandler) SaveUser(c echo.Context) error {
 	}
 
 	// Publish event
-	event := "user.created"
-	if err := h.publisher.Publish(event, map[string]interface{}{
+	if err := h.publisher.Publish(publisher.EventUserCreated, map[string]interface{}{
 		"user_id":        user.ID.String(),
 		"user_email":     user.Email,
 		"correlation_id": correlationID,
 	}); err != nil {
 		h.logger.Error(ctx, "Failed to publish event", map[string]interface{}{
 			"user_id":        user.ID.String(),
-			"event":          event,
+			"event":          publisher.EventUserCreated,
 			"error":          err.Error(),
 			"correlation_id": correlationID,
 		})
@@ -220,7 +219,7 @@ func (h *UserHandler) SaveUser(c echo.Context) error {
 	h.logger.Info(ctx, "User saved successfully", map[string]interface{}{
 		"user_id":        user.ID.String(),
 		"user_email":     user.Email,
-		"event":          event,
+		"event":          publisher.EventUserCreated,
 		"correlation_id": correlationID,
 	})
 
@@ -273,15 +272,14 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 	}
 
 	// Publish event
-	event := "user.updated"
-	if err := h.publisher.Publish(event, map[string]interface{}{
+	if err := h.publisher.Publish(publisher.EventUserUpdated, map[string]interface{}{
 		"user_id":        user.ID.String(),
 		"user_email":     user.Email,
 		"correlation_id": correlationID,
 	}); err != nil {
 		h.logger.Error(ctx, "Failed to publish event", map[string]interface{}{
 			"user_id":        user.ID.String(),
-			"event":          event,
+			"event":          publisher.EventUserUpdated,
 			"error":          err.Error(),
 			"correlation_id": correlationID,
 		})
@@ -323,14 +321,13 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 	}
 
 	// Publish event
-	event := "user.deleted"
-	if err := h.publisher.Publish(event, map[string]interface{}{
+	if err := h.publisher.Publish(publisher.EventUserDeleted, map[string]interface{}{
 		"user_id":        id.String(),
 		"correlation_id": correlationID,
 	}); err != nil {
 		h.logger.Error(ctx, "Failed to publish event", map[string]interface{}{
 			"user_id":        id.String(),
-			"event":          event,
+			"event":          publisher.EventUserDeleted,
 			"error":          err.Error(),
 			"correlation_id": correlationID,
 		})
@@ -338,7 +335,7 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 
 	h.logger.Info(ctx, "User deleted successfully", map[string]interface{}{
 		"user_id":        id.String(),
-		"event":          event,
+		"event":          publisher.EventUserDeleted,
 		"correlation_id": correlationID,
 	})
 

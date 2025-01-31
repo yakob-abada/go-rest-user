@@ -73,8 +73,8 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-test}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-test}
-      POSTGRES_DB: test_db # @todo this should be variable
-      POSTGRES_HOST: postgres  # Connect to the database container
+      POSTGRES_DB: test_db
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_PORT: "5432"
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     volumes:

@@ -28,13 +28,13 @@ func NewAMQPPublisher(amqpURL, exchange string) (*AMQPPublisher, error) {
 
 	// Declare exchange if it does not exist
 	err = ch.ExchangeDeclare(
-		exchange, // name
-		"topic",  // type
-		true,     // durable
-		false,    // auto-delete
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
+		exchange,
+		"topic",
+		true,
+		false,
+		false,
+		false,
+		nil,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to declare exchange: %w", err)
@@ -48,17 +48,17 @@ func NewAMQPPublisher(amqpURL, exchange string) (*AMQPPublisher, error) {
 }
 
 // Publish sends a message to the RabbitMQ exchange
-func (p *AMQPPublisher) Publish(event string, payload map[string]interface{}) error {
+func (p *AMQPPublisher) Publish(event EventType, payload map[string]interface{}) error {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal message: %w", err)
 	}
 
 	err = p.Channel.Publish(
-		p.Exchange, // exchange
-		event,      // routing key
-		false,      // mandatory
-		false,      // immediate
+		p.Exchange,
+		fmt.Sprintf("%s", event),
+		false,
+		false,
 		amqp.Publishing{
 			ContentType: "application/json",
 			Body:        body,

@@ -86,7 +86,7 @@ func TestSaveUser_Success(t *testing.T) {
 		user := args.Get(1).(*model.User)
 		user.ID = uuid.New()
 	}).Return(nil)
-	mockPublisher.On("Publish", "user.created", mock.Anything).Return(nil)
+	mockPublisher.On("Publish", publisher.EventUserCreated, mock.Anything).Return(nil)
 	mockLogger.On("Info", mock.Anything, "User saved successfully", mock.Anything).Return()
 
 	handler := NewUserHandler(mockRepo, mockLogger, mockValidator, mockPublisher, mockErrorHandler, mockHasher)
@@ -95,7 +95,7 @@ func TestSaveUser_Success(t *testing.T) {
 
 	// Assertions
 	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	var resp model.User
 	err = json.Unmarshal(rec.Body.Bytes(), &resp)
@@ -213,7 +213,7 @@ func TestUpdateUser(t *testing.T) {
 	}
 
 	mockRepo.On("UpdateUser", mock.Anything, userID, updateData).Return(expectedUser, nil)
-	mockPublisher.On("Publish", "user.updated", mock.Anything).Return(nil)
+	mockPublisher.On("Publish", publisher.EventUserUpdated, mock.Anything).Return(nil)
 
 	// Convert updateData to JSON
 	jsonData, _ := json.Marshal(updateData)
@@ -350,7 +350,7 @@ func TestDeleteUser_Success(t *testing.T) {
 
 	// Define expectations
 	mockRepo.On("DeleteUser", mock.Anything, userID).Return(nil)
-	mockPublisher.On("Publish", "user.deleted", mock.Anything).Return(nil)
+	mockPublisher.On("Publish", publisher.EventUserDeleted, mock.Anything).Return(nil)
 	mockLogger.On("Info", mock.Anything, "User deleted successfully", mock.MatchedBy(func(fields map[string]interface{}) bool {
 		return fields["user_id"] == userID.String()
 	})).Return()
