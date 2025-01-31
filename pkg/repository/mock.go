@@ -38,7 +38,7 @@ func (m *MockUserRepository) GetUserByEmail(ctx context.Context, email string) (
 }
 
 // UpdateUser mocks the UpdateUser method
-func (m *MockUserRepository) UpdateUser(ctx context.Context, id string, updatedData map[string]interface{}) (*model.User, error) {
+func (m *MockUserRepository) UpdateUser(ctx context.Context, id string, updatedData *model.UserUpdate) (*model.User, error) {
 	args := m.Called(ctx, id, updatedData)
 	if args.Get(0) != nil {
 		return args.Get(0).(*model.User), args.Error(1)

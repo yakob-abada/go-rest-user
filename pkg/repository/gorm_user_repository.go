@@ -99,7 +99,7 @@ func (repo *GormUserRepository) GetUserByEmail(ctx context.Context, email string
 	return &user, err
 }
 
-func (repo *GormUserRepository) UpdateUser(ctx context.Context, id string, updatedData map[string]interface{}) (*model.User, error) {
+func (repo *GormUserRepository) UpdateUser(ctx context.Context, id string, updatedData *model.UserUpdate) (*model.User, error) {
 	var user model.User
 
 	// Check if user exists
@@ -108,6 +108,18 @@ func (repo *GormUserRepository) UpdateUser(ctx context.Context, id string, updat
 			return nil, errors.New("user not found")
 		}
 		return nil, err
+	}
+
+	// Convert struct to map
+	updateData := map[string]interface{}{}
+	if updatedData.FirstName != "" {
+		updateData["first_name"] = updatedData.FirstName
+	}
+	if updatedData.LastName != "" {
+		updateData["last_name"] = updatedData.LastName
+	}
+	if updatedData.Country != "" {
+		updateData["country"] = updatedData.Country
 	}
 
 	// Update user fields

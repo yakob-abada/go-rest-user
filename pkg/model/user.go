@@ -20,5 +20,6 @@ type User struct {
 type UserUpdate struct {
 	FirstName string `json:"first_name,omitempty"`
 	LastName  string `json:"last_name,omitempty"`
+	Nickname  string `json:"nickname,omitempty"`
 	Country   string `json:"country,omitempty"`
 }

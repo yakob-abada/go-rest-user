@@ -12,6 +12,6 @@ type UserRepository interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 	SaveUser(ctx context.Context, user *model.User) error
-	UpdateUser(ctx context.Context, id string, updatedData map[string]interface{}) (*model.User, error)
+	UpdateUser(ctx context.Context, id string, updatedData *model.UserUpdate) (*model.User, error)
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 }

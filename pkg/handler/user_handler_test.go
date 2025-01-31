@@ -194,9 +194,10 @@ func TestUpdateUser(t *testing.T) {
 
 	// Sample User Update Data
 	userID := "550e8400-e29b-41d4-a716-446655440000"
-	updateData := map[string]interface{}{
-		"first_name": "Johnny",
-		"country":    "Canada",
+
+	updateData := &model.UserUpdate{
+		FirstName: "Johnny",
+		Country:   "Canada",
 	}
 
 	expectedUser := &model.User{
@@ -293,8 +294,9 @@ func TestUpdateUser_UserNotFound(t *testing.T) {
 	mockHasher := new(security.MockPasswordHasher)
 
 	userID := "550e8400-e29b-41d4-a716-446655440000"
-	updateData := map[string]interface{}{
-		"first_name": "Johnny",
+
+	updateData := &model.UserUpdate{
+		FirstName: "Johnny",
 	}
 
 	mockRepo.On("UpdateUser", mock.Anything, userID, updateData).Return(nil, errors.New("user not found"))

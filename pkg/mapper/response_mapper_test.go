@@ -10,7 +10,7 @@ import (
 
 // TestUserResponseMapper ensures correct mapping from User to UserResponse.
 func TestUserResponseMapper(t *testing.T) {
-	userID := uuid.New() // Generate a new UUID
+	userID := uuid.New()
 
 	user := model.User{
 		ID:        userID,

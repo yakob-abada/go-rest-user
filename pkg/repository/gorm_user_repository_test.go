@@ -163,9 +163,9 @@ func TestUpdateUser(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Update user
-	updatedData := map[string]interface{}{
-		"first_name": "Johnny",
-		"country":    "Canada",
+	updatedData := &model.UserUpdate{
+		FirstName: "Johnny",
+		Country:   "Canada",
 	}
 
 	updatedUser, err := repo.UpdateUser(ctx, user.ID.String(), updatedData)

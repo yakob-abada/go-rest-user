@@ -204,19 +204,7 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
 
-	// Convert struct to map
-	updateData := map[string]interface{}{}
-	if updateRequest.FirstName != "" {
-		updateData["first_name"] = updateRequest.FirstName
-	}
-	if updateRequest.LastName != "" {
-		updateData["last_name"] = updateRequest.LastName
-	}
-	if updateRequest.Country != "" {
-		updateData["country"] = updateRequest.Country
-	}
-
-	user, err := h.repo.UpdateUser(ctx, id, updateData)
+	user, err := h.repo.UpdateUser(ctx, id, &updateRequest)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
