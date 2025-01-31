@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/yakob-abada/go-rest-user/pkg/mapper"
 	"net/http"
 	"strconv"
 
@@ -94,25 +95,12 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 		})
 	}
 
-	// Remove passwords before sending response
-	var safeUsers []map[string]interface{}
-	for _, user := range users {
-		safeUsers = append(safeUsers, map[string]interface{}{
-			"id":         user.ID,
-			"first_name": user.FirstName,
-			"last_name":  user.LastName,
-			"nickname":   user.Nickname,
-			"email":      user.Email,
-			"country":    user.Country,
-		})
-	}
-
 	// Return response
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"page":        page,
 		"limit":       limit,
 		"total_users": total,
-		"users":       safeUsers,
+		"users":       mapper.UsersResponseMapper(users),
 	})
 }
 
@@ -192,13 +180,7 @@ func (h *UserHandler) SaveUser(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"id":         user.ID,
-		"first_name": user.FirstName,
-		"last_name":  user.LastName,
-		"email":      user.Email,
-		"country":    user.Country,
-	})
+	return c.JSON(http.StatusCreated, mapper.UserResponseMapper(user))
 }
 
 // UpdateUser updates user details
@@ -216,7 +198,7 @@ func (h *UserHandler) SaveUser(c echo.Context) error {
 func (h *UserHandler) UpdateUser(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.Param("id")
-	var updateRequest model.UpdateUserRequest
+	var updateRequest model.UserUpdate
 
 	if err := c.Bind(&updateRequest); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})

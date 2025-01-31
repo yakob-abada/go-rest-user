@@ -17,11 +17,8 @@ type User struct {
 	UpdatedAt *time.Time `json:"-"`
 }
 
-type UserRequest struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Nickname  string `json:"nickname"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	Country   string `json:"country"`
+type UserUpdate struct {
+	FirstName string `json:"first_name,omitempty"`
+	LastName  string `json:"last_name,omitempty"`
+	Country   string `json:"country,omitempty"`
 }
