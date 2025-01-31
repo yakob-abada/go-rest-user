@@ -126,37 +126,6 @@ make stop
 
 ---
 
-## 📌 Troubleshooting
-
-### **1️⃣ PostgreSQL Connection Issues**
-Check if PostgreSQL is running:
-```sh
-docker ps | grep postgres
-```
-Manually enter the container:
-```sh
-docker exec -it user_db psql -U test -d user_db
-```
-
-### **2️⃣ RabbitMQ Not Running**
-Check if RabbitMQ is running:
-```sh
-docker ps | grep rabbitmq
-```
-If not, restart it:
-```sh
-docker-compose up -d rabbitmq
-```
-
-### **3️⃣ Health Check Failing**
-Test health status:
-```sh
-curl -X GET "http://localhost:8080/health"
-```
-If the response is `{ "status": "unhealthy" }`, check if the database is reachable.
-
----
-
 ## 💡 Additional Notes
 - The project follows **RESTful API standards**.
 - Uses **JWT authentication (if implemented)**.
