@@ -42,7 +42,6 @@ func TestGetUsers_Success(t *testing.T) {
 
 	// Define expectations
 	mockRepo.On("GetUsers", mock.Anything, 1, 2, mock.Anything, "", "").Return(users, int64(2), nil)
-	mockLogger.On("Info", mock.Anything, "Fetched users with pagination and filters", mock.Anything).Return()
 
 	handler := NewUserHandler(mockRepo, mockLogger, nil, nil, mockErrorHandler, mockHasher)
 
@@ -87,7 +86,6 @@ func TestSaveUser_Success(t *testing.T) {
 		user.ID = uuid.New()
 	}).Return(nil)
 	mockPublisher.On("Publish", publisher.EventUserCreated, mock.Anything).Return(nil)
-	mockLogger.On("Info", mock.Anything, "User saved successfully", mock.Anything).Return()
 
 	handler := NewUserHandler(mockRepo, mockLogger, mockValidator, mockPublisher, mockErrorHandler, mockHasher)
 
@@ -166,9 +164,6 @@ func TestSaveUser_ValidationFailure(t *testing.T) {
 	mockValidator.On("ValidateUser", mock.Anything).Return(assert.AnError) // Validation fails
 	mockErrorHandler.On("HandleBadRequest", mock.Anything, c, "Validation failed", mock.Anything).
 		Return(c.JSON(http.StatusBadRequest, map[string]string{"error": "Validation failed"}))
-	mockLogger.On("Info", mock.Anything, "User saved successfully", mock.MatchedBy(func(fields map[string]interface{}) bool {
-		return fields["user_email"] == "john.doe@example.com"
-	})).Return()
 
 	handler := NewUserHandler(mockRepo, mockLogger, mockValidator, mockPublisher, mockErrorHandler, mockHasher)
 
@@ -351,9 +346,6 @@ func TestDeleteUser_Success(t *testing.T) {
 	// Define expectations
 	mockRepo.On("DeleteUser", mock.Anything, userID).Return(nil)
 	mockPublisher.On("Publish", publisher.EventUserDeleted, mock.Anything).Return(nil)
-	mockLogger.On("Info", mock.Anything, "User deleted successfully", mock.MatchedBy(func(fields map[string]interface{}) bool {
-		return fields["user_id"] == userID.String()
-	})).Return()
 
 	handler := NewUserHandler(mockRepo, mockLogger, nil, mockPublisher, mockErrorHandler, mockHasher)
 

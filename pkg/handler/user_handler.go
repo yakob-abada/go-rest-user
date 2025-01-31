@@ -95,7 +95,7 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 	}
 
 	// Remove passwords before sending response
-	safeUsers := []map[string]interface{}{}
+	var safeUsers []map[string]interface{}
 	for _, user := range users {
 		safeUsers = append(safeUsers, map[string]interface{}{
 			"id":         user.ID,
@@ -106,16 +106,6 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 			"country":    user.Country,
 		})
 	}
-
-	// Log request
-	h.logger.Info(ctx, "Fetched users with pagination and filters", map[string]interface{}{
-		"page":        page,
-		"limit":       limit,
-		"total_users": total,
-		"filters":     filters,
-		"sort_by":     sortBy,
-		"order":       order,
-	})
 
 	// Return response
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -201,12 +191,6 @@ func (h *UserHandler) SaveUser(c echo.Context) error {
 			"error":   err.Error(),
 		})
 	}
-
-	h.logger.Info(ctx, "User saved successfully", map[string]interface{}{
-		"user_id":    user.ID.String(),
-		"user_email": user.Email,
-		"event":      publisher.EventUserCreated,
-	})
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"id":         user.ID,
@@ -309,11 +293,6 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 			"error":   err.Error(),
 		})
 	}
-
-	h.logger.Info(ctx, "User deleted successfully", map[string]interface{}{
-		"user_id": id.String(),
-		"event":   publisher.EventUserDeleted,
-	})
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "User deleted successfully"})
 }
