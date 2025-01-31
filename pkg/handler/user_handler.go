@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/yakob-abada/go-rest-user/pkg/common"
 	"github.com/yakob-abada/go-rest-user/pkg/errorhandler"
 	"github.com/yakob-abada/go-rest-user/pkg/logging"
@@ -11,19 +13,16 @@ import (
 	"github.com/yakob-abada/go-rest-user/pkg/validator"
 	"net/http"
 	"strconv"
-
-	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 )
 
 // UserHandler handles user-related requests
 type UserHandler struct {
-	Repo         repository.UserRepository
-	Logger       logging.Logger
-	Validator    validator.UserValidator
-	Publisher    publisher.Publisher
-	ErrorHandler errorhandler.ErrorHandler
-	Hasher       security.PasswordHasher
+	repo         repository.UserRepository
+	logger       logging.Logger
+	validator    validator.UserValidator
+	publisher    publisher.Publisher
+	errorHandler errorhandler.ErrorHandler
+	hasher       security.PasswordHasher
 }
 
 // NewUserHandler creates a new instance of UserHandler with dependencies
@@ -32,171 +31,13 @@ func NewUserHandler(
 	publisher publisher.Publisher, errorHandler errorhandler.ErrorHandler, Hasher security.PasswordHasher,
 ) *UserHandler {
 	return &UserHandler{
-		Repo:         repo,
-		Logger:       logger,
-		Validator:    validator,
-		Publisher:    publisher,
-		ErrorHandler: errorHandler,
-		Hasher:       Hasher,
+		repo:         repo,
+		logger:       logger,
+		validator:    validator,
+		publisher:    publisher,
+		errorHandler: errorHandler,
+		hasher:       Hasher,
 	}
-}
-
-// SaveUser creates a new user
-// @Summary Create a new user
-// @Description Registers a new user with hashed password
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param user body model.User true "User data"
-// @Success 201 {object} model.User
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /users [post]
-func (h *UserHandler) SaveUser(c echo.Context) error {
-	ctx := c.Request().Context()
-	correlationID := common.GetCorrelationID(ctx)
-
-	var user model.User
-	if err := c.Bind(&user); err != nil {
-		return h.ErrorHandler.HandleBadRequest(ctx, c, "Invalid request payload", map[string]interface{}{
-			"endpoint":       "SaveUser",
-			"error":          err.Error(),
-			"correlation_id": correlationID,
-		})
-	}
-
-	// Validate user data
-	if err := h.Validator.ValidateUser(&user); err != nil {
-		return h.ErrorHandler.HandleBadRequest(ctx, c, "Validation failed", map[string]interface{}{
-			"user_email":     user.Email,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
-		})
-	}
-
-	existingUser, err := h.Repo.GetUserByEmail(ctx, user.Email)
-	if err != nil {
-		return h.ErrorHandler.HandleInternalServerError(ctx, c, "Database error", map[string]interface{}{
-			"user_email":     user.Email,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
-		})
-	}
-	if existingUser != nil {
-		h.Logger.Warn(ctx, "User already exists", map[string]interface{}{
-			"user_email":     user.Email,
-			"correlation_id": correlationID,
-		})
-		return h.ErrorHandler.HandleBadRequest(ctx, c, "User with this email already exists", map[string]interface{}{
-			"user_email":     user.Email,
-			"correlation_id": correlationID,
-		})
-	}
-
-	// Hash password
-	hashedPassword, err := h.Hasher.HashPassword(user.Password)
-	if err != nil {
-		return h.ErrorHandler.HandleInternalServerError(ctx, c, "Failed to hash password", map[string]interface{}{
-			"user_email":     user.Email,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
-		})
-	}
-	user.Password = hashedPassword
-
-	// Save the user
-	if err := h.Repo.SaveUser(ctx, &user); err != nil {
-		return h.ErrorHandler.HandleInternalServerError(ctx, c, "Failed to save user", map[string]interface{}{
-			"user_email":     user.Email,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
-		})
-	}
-
-	// Publish event
-	event := "user.created"
-	if err := h.Publisher.Publish(event, map[string]interface{}{
-		"user_id":        user.ID.String(),
-		"user_email":     user.Email,
-		"correlation_id": correlationID,
-	}); err != nil {
-		h.Logger.Error(ctx, "Failed to publish event", map[string]interface{}{
-			"user_id":        user.ID.String(),
-			"event":          event,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
-		})
-	}
-
-	h.Logger.Info(ctx, "User saved successfully", map[string]interface{}{
-		"user_id":        user.ID.String(),
-		"user_email":     user.Email,
-		"event":          event,
-		"correlation_id": correlationID,
-	})
-
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"id":         user.ID,
-		"first_name": user.FirstName,
-		"last_name":  user.LastName,
-		"email":      user.Email,
-		"country":    user.Country,
-	})
-}
-
-// DeleteUser removes a user by ID
-// @Summary Delete a user
-// @Description Deletes a user by ID
-// @Tags users
-// @Param id path string true "User ID"
-// @Success 200 {object} map[string]string
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /users/{id} [delete]
-func (h *UserHandler) DeleteUser(c echo.Context) error {
-	ctx := c.Request().Context()
-	correlationID := common.GetCorrelationID(ctx)
-
-	id, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		return h.ErrorHandler.HandleBadRequest(ctx, c, "Invalid UUID format", map[string]interface{}{
-			"endpoint":       "DeleteUser",
-			"user_id":        c.Param("id"),
-			"error":          err.Error(),
-			"correlation_id": correlationID,
-		})
-	}
-
-	// Delete user from DB
-	if err := h.Repo.DeleteUser(ctx, id); err != nil {
-		return h.ErrorHandler.HandleInternalServerError(ctx, c, "Failed to delete user", map[string]interface{}{
-			"user_id":        id.String(),
-			"error":          err.Error(),
-			"correlation_id": correlationID,
-		})
-	}
-
-	// Publish event
-	event := "user.deleted"
-	if err := h.Publisher.Publish(event, map[string]interface{}{
-		"user_id":        id.String(),
-		"correlation_id": correlationID,
-	}); err != nil {
-		h.Logger.Error(ctx, "Failed to publish event", map[string]interface{}{
-			"user_id":        id.String(),
-			"event":          event,
-			"error":          err.Error(),
-			"correlation_id": correlationID,
-		})
-	}
-
-	h.Logger.Info(ctx, "User deleted successfully", map[string]interface{}{
-		"user_id":        id.String(),
-		"event":          event,
-		"correlation_id": correlationID,
-	})
-
-	return c.JSON(http.StatusOK, map[string]string{"message": "User deleted successfully"})
 }
 
 // GetUsers retrieves users with pagination and filtering
@@ -247,9 +88,9 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 	}
 
 	// Fetch users from repository
-	users, total, err := h.Repo.GetUsers(ctx, page, limit, filters, sortBy, order)
+	users, total, err := h.repo.GetUsers(ctx, page, limit, filters, sortBy, order)
 	if err != nil {
-		return h.ErrorHandler.HandleInternalServerError(ctx, c, "Failed to retrieve users", map[string]interface{}{
+		return h.errorHandler.HandleInternalServerError(ctx, c, "Failed to retrieve users", map[string]interface{}{
 			"error":          err.Error(),
 			"correlation_id": correlationID,
 		})
@@ -269,7 +110,7 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 	}
 
 	// Log request
-	h.Logger.Info(ctx, "Fetched users with pagination and filters", map[string]interface{}{
+	h.logger.Info(ctx, "Fetched users with pagination and filters", map[string]interface{}{
 		"page":           page,
 		"limit":          limit,
 		"total_users":    total,
@@ -286,4 +127,219 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 		"total_users": total,
 		"users":       safeUsers,
 	})
+}
+
+// SaveUser creates a new user
+// @Summary Create a new user
+// @Description Registers a new user with hashed password
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body model.User true "User data"
+// @Success 201 {object} model.User
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /users [post]
+func (h *UserHandler) SaveUser(c echo.Context) error {
+	ctx := c.Request().Context()
+	correlationID := common.GetCorrelationID(ctx)
+
+	var user model.User
+	if err := c.Bind(&user); err != nil {
+		return h.errorHandler.HandleBadRequest(ctx, c, "Invalid request payload", map[string]interface{}{
+			"endpoint":       "SaveUser",
+			"error":          err.Error(),
+			"correlation_id": correlationID,
+		})
+	}
+
+	// Validate user data
+	if err := h.validator.ValidateUser(&user); err != nil {
+		return h.errorHandler.HandleBadRequest(ctx, c, "Validation failed", map[string]interface{}{
+			"user_email":     user.Email,
+			"error":          err.Error(),
+			"correlation_id": correlationID,
+		})
+	}
+
+	existingUser, err := h.repo.GetUserByEmail(ctx, user.Email)
+	if err != nil {
+		return h.errorHandler.HandleInternalServerError(ctx, c, "Database error", map[string]interface{}{
+			"user_email":     user.Email,
+			"error":          err.Error(),
+			"correlation_id": correlationID,
+		})
+	}
+	if existingUser != nil {
+		h.logger.Warn(ctx, "User already exists", map[string]interface{}{
+			"user_email":     user.Email,
+			"correlation_id": correlationID,
+		})
+		return h.errorHandler.HandleBadRequest(ctx, c, "User with this email already exists", map[string]interface{}{
+			"user_email":     user.Email,
+			"correlation_id": correlationID,
+		})
+	}
+
+	// Hash password
+	hashedPassword, err := h.hasher.HashPassword(user.Password)
+	if err != nil {
+		return h.errorHandler.HandleInternalServerError(ctx, c, "Failed to hash password", map[string]interface{}{
+			"user_email":     user.Email,
+			"error":          err.Error(),
+			"correlation_id": correlationID,
+		})
+	}
+	user.Password = hashedPassword
+
+	// Save the user
+	if err := h.repo.SaveUser(ctx, &user); err != nil {
+		return h.errorHandler.HandleInternalServerError(ctx, c, "Failed to save user", map[string]interface{}{
+			"user_email":     user.Email,
+			"error":          err.Error(),
+			"correlation_id": correlationID,
+		})
+	}
+
+	// Publish event
+	event := "user.created"
+	if err := h.publisher.Publish(event, map[string]interface{}{
+		"user_id":        user.ID.String(),
+		"user_email":     user.Email,
+		"correlation_id": correlationID,
+	}); err != nil {
+		h.logger.Error(ctx, "Failed to publish event", map[string]interface{}{
+			"user_id":        user.ID.String(),
+			"event":          event,
+			"error":          err.Error(),
+			"correlation_id": correlationID,
+		})
+	}
+
+	h.logger.Info(ctx, "User saved successfully", map[string]interface{}{
+		"user_id":        user.ID.String(),
+		"user_email":     user.Email,
+		"event":          event,
+		"correlation_id": correlationID,
+	})
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"id":         user.ID,
+		"first_name": user.FirstName,
+		"last_name":  user.LastName,
+		"email":      user.Email,
+		"country":    user.Country,
+	})
+}
+
+// UpdateUser updates user details
+// @Summary Update a user
+// @Description Update an existing user's details
+// @Tags Users
+// @Accept  json
+// @Produce  json
+// @Param id path string true "User ID"
+// @Param user body map[string]interface{} true "Updated user fields"
+// @Success 200 {object} model.User
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /users/{id} [put]
+func (h *UserHandler) UpdateUser(c echo.Context) error {
+	ctx := c.Request().Context()
+	id := c.Param("id")
+	correlationID := common.GetCorrelationID(ctx)
+	var updateRequest model.UpdateUserRequest
+
+	if err := c.Bind(&updateRequest); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+	}
+
+	// Convert struct to map
+	updateData := map[string]interface{}{}
+	if updateRequest.FirstName != "" {
+		updateData["first_name"] = updateRequest.FirstName
+	}
+	if updateRequest.LastName != "" {
+		updateData["last_name"] = updateRequest.LastName
+	}
+	if updateRequest.Country != "" {
+		updateData["country"] = updateRequest.Country
+	}
+
+	user, err := h.repo.UpdateUser(ctx, id, updateData)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	// Publish event
+	event := "user.updated"
+	if err := h.publisher.Publish(event, map[string]interface{}{
+		"user_id":        user.ID.String(),
+		"user_email":     user.Email,
+		"correlation_id": correlationID,
+	}); err != nil {
+		h.logger.Error(ctx, "Failed to publish event", map[string]interface{}{
+			"user_id":        user.ID.String(),
+			"event":          event,
+			"error":          err.Error(),
+			"correlation_id": correlationID,
+		})
+	}
+
+	return c.JSON(http.StatusOK, user)
+}
+
+// DeleteUser removes a user by ID
+// @Summary Delete a user
+// @Description Deletes a user by ID
+// @Tags users
+// @Param id path string true "User ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /users/{id} [delete]
+func (h *UserHandler) DeleteUser(c echo.Context) error {
+	ctx := c.Request().Context()
+	correlationID := common.GetCorrelationID(ctx)
+
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return h.errorHandler.HandleBadRequest(ctx, c, "Invalid UUID format", map[string]interface{}{
+			"endpoint":       "DeleteUser",
+			"user_id":        c.Param("id"),
+			"error":          err.Error(),
+			"correlation_id": correlationID,
+		})
+	}
+
+	// Delete user from db
+	if err := h.repo.DeleteUser(ctx, id); err != nil {
+		return h.errorHandler.HandleInternalServerError(ctx, c, "Failed to delete user", map[string]interface{}{
+			"user_id":        id.String(),
+			"error":          err.Error(),
+			"correlation_id": correlationID,
+		})
+	}
+
+	// Publish event
+	event := "user.deleted"
+	if err := h.publisher.Publish(event, map[string]interface{}{
+		"user_id":        id.String(),
+		"correlation_id": correlationID,
+	}); err != nil {
+		h.logger.Error(ctx, "Failed to publish event", map[string]interface{}{
+			"user_id":        id.String(),
+			"event":          event,
+			"error":          err.Error(),
+			"correlation_id": correlationID,
+		})
+	}
+
+	h.logger.Info(ctx, "User deleted successfully", map[string]interface{}{
+		"user_id":        id.String(),
+		"event":          event,
+		"correlation_id": correlationID,
+	})
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "User deleted successfully"})
 }

@@ -21,7 +21,7 @@ func NewErrorHandler(logger logging.Logger) *DefaultErrorHandler {
 
 // HandleBadRequest sends a structured bad request response
 func (eh *DefaultErrorHandler) HandleBadRequest(ctx context.Context, c echo.Context, message string, details map[string]interface{}) error {
-	//eh.Logger.Warn(ctx, message, details)
+	//eh.logger.Warn(ctx, message, details)
 	return c.JSON(http.StatusBadRequest, map[string]interface{}{
 		"error":          message,
 		"details":        details,
@@ -31,7 +31,7 @@ func (eh *DefaultErrorHandler) HandleBadRequest(ctx context.Context, c echo.Cont
 
 // HandleInternalServerError sends a structured internal server error response
 func (eh *DefaultErrorHandler) HandleInternalServerError(ctx context.Context, c echo.Context, message string, details map[string]interface{}) error {
-	//eh.Logger.Error(ctx, message, details)
+	//eh.logger.Error(ctx, message, details)
 	return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 		"error":          message,
 		"details":        details,

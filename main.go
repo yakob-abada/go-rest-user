@@ -25,6 +25,7 @@ func main() {
 	logger := logging.NewZeroLogger()
 	userHandler := bootstrap.NewUserHandler(db, rabbitMQ, logger)
 
+	e.PUT("/users/:id", userHandler.UpdateUser)
 	e.POST("/users", userHandler.SaveUser)
 	e.GET("/users", userHandler.GetUsers)
 	e.DELETE("/users/:id", userHandler.DeleteUser)

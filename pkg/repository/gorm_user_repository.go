@@ -12,12 +12,12 @@ import (
 
 // GormUserRepository implements UserRepository using GORM
 type GormUserRepository struct {
-	DB *gorm.DB
+	db *gorm.DB
 }
 
 // NewGormUserRepository creates a new instance
 func NewGormUserRepository(db *gorm.DB) *GormUserRepository {
-	return &GormUserRepository{DB: db}
+	return &GormUserRepository{db: db}
 }
 
 // GetUsers retrieves paginated users with filtering and sorting
@@ -25,7 +25,7 @@ func (repo *GormUserRepository) GetUsers(ctx context.Context, page, limit int, f
 	var users []model.User
 	var total int64
 
-	query := repo.DB.WithContext(ctx).Model(&model.User{})
+	query := repo.db.WithContext(ctx).Model(&model.User{})
 
 	// Apply filters
 	if val, exists := filters["first_name"]; exists {
@@ -61,7 +61,7 @@ func (repo *GormUserRepository) GetUsers(ctx context.Context, page, limit int, f
 	// Apply pagination
 	offset := (page - 1) * limit
 	if err := query.Limit(limit).Offset(offset).Find(&users).Error; err != nil {
-		log.Error().Err(err).Msg("Failed to fetch users from DB")
+		log.Error().Err(err).Msg("Failed to fetch users from db")
 		return nil, 0, err
 	}
 
@@ -73,7 +73,7 @@ func (repo *GormUserRepository) GetUsers(ctx context.Context, page, limit int, f
 // GetUserByID fetches a single user by UUID
 func (repo *GormUserRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	var user model.User
-	if err := repo.DB.WithContext(ctx).First(&user, "id = ?", id).Error; err != nil {
+	if err := repo.db.WithContext(ctx).First(&user, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Warn().Str("user_id", id.String()).Msg("User not found")
 			return nil, nil
@@ -90,7 +90,7 @@ func (repo *GormUserRepository) GetUserByID(ctx context.Context, id uuid.UUID) (
 // GetUserByEmail retrieves a user by email
 func (repo *GormUserRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	var user model.User
-	err := repo.DB.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	err := repo.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil // No user found
@@ -99,9 +99,28 @@ func (repo *GormUserRepository) GetUserByEmail(ctx context.Context, email string
 	return &user, err
 }
 
+func (repo *GormUserRepository) UpdateUser(ctx context.Context, id string, updatedData map[string]interface{}) (*model.User, error) {
+	var user model.User
+
+	// Check if user exists
+	if err := repo.db.WithContext(ctx).First(&user, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+
+	// Update user fields
+	if err := repo.db.WithContext(ctx).Model(&user).Updates(updatedData).Error; err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 // SaveUser creates or updates a user
 func (repo *GormUserRepository) SaveUser(ctx context.Context, user *model.User) error {
-	if err := repo.DB.WithContext(ctx).Save(user).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Save(user).Error; err != nil {
 		log.Error().Err(err).Str("email", user.Email).Msg("Failed to save user")
 		return err
 	}
@@ -112,7 +131,7 @@ func (repo *GormUserRepository) SaveUser(ctx context.Context, user *model.User) 
 
 // DeleteUser deletes a user by UUID
 func (repo *GormUserRepository) DeleteUser(ctx context.Context, id uuid.UUID) error {
-	if err := repo.DB.WithContext(ctx).Delete(&model.User{}, "id = ?", id).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Delete(&model.User{}, "id = ?", id).Error; err != nil {
 		log.Error().Err(err).Str("user_id", id.String()).Msg("Failed to delete user")
 		return err
 	}

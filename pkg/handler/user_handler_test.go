@@ -5,13 +5,7 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/yakob-abada/go-rest-user/pkg/errorhandler"
-	"github.com/yakob-abada/go-rest-user/pkg/logging"
-	"github.com/yakob-abada/go-rest-user/pkg/model"
-	"github.com/yakob-abada/go-rest-user/pkg/publisher"
-	"github.com/yakob-abada/go-rest-user/pkg/repository"
-	"github.com/yakob-abada/go-rest-user/pkg/security"
-	"github.com/yakob-abada/go-rest-user/pkg/validator"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,7 +14,53 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/yakob-abada/go-rest-user/pkg/errorhandler"
+	"github.com/yakob-abada/go-rest-user/pkg/logging"
+	"github.com/yakob-abada/go-rest-user/pkg/model"
+	"github.com/yakob-abada/go-rest-user/pkg/publisher"
+	"github.com/yakob-abada/go-rest-user/pkg/repository"
+	"github.com/yakob-abada/go-rest-user/pkg/security"
+	"github.com/yakob-abada/go-rest-user/pkg/validator"
 )
+
+func TestGetUsers_Success(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/users?page=1&limit=2", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	// Mock dependencies
+	mockRepo := new(repository.MockUserRepository)
+	mockLogger := new(logging.MockLogger)
+	mockErrorHandler := new(errorhandler.MockErrorHandler)
+	mockHasher := new(security.MockPasswordHasher)
+
+	users := []model.User{
+		{ID: uuid.New(), FirstName: "John", LastName: "Doe", Email: "john.doe@example.com", Country: "USA"},
+		{ID: uuid.New(), FirstName: "Jane", LastName: "Doe", Email: "jane.doe@example.com", Country: "Canada"},
+	}
+
+	// Define expectations
+	mockRepo.On("GetUsers", mock.Anything, 1, 2, mock.Anything, "", "").Return(users, int64(2), nil)
+	mockLogger.On("Info", mock.Anything, "Fetched users with pagination and filters", mock.Anything).Return()
+
+	handler := NewUserHandler(mockRepo, mockLogger, nil, nil, mockErrorHandler, mockHasher)
+
+	err := handler.GetUsers(c)
+
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var resp map[string]interface{}
+	err = json.Unmarshal(rec.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Equal(t, float64(2), resp["total_users"])
+
+	// Verify mock expectations
+	mockRepo.AssertExpectations(t)
+	mockLogger.AssertExpectations(t)
+}
 
 func TestSaveUser_Success(t *testing.T) {
 	e := echo.New()
@@ -144,6 +184,154 @@ func TestSaveUser_ValidationFailure(t *testing.T) {
 	mockErrorHandler.AssertExpectations(t)
 }
 
+// Test UpdateUser Handler
+func TestUpdateUser(t *testing.T) {
+	// Initialize Echo instance and Mock Repository
+	e := echo.New()
+
+	// Mock dependencies
+	mockRepo := new(repository.MockUserRepository)
+	mockPublisher := new(publisher.MockPublisher)
+	mockValidator := new(validator.MockValidator)
+	mockLogger := new(logging.MockLogger)
+	mockErrorHandler := new(errorhandler.MockErrorHandler)
+	mockHasher := new(security.MockPasswordHasher)
+
+	// Sample User Update Data
+	userID := "550e8400-e29b-41d4-a716-446655440000"
+	updateData := map[string]interface{}{
+		"first_name": "Johnny",
+		"country":    "Canada",
+	}
+
+	expectedUser := &model.User{
+		ID:        uuid.MustParse(userID),
+		FirstName: "Johnny",
+		LastName:  "Doe",
+		Email:     "john.doe@example.com",
+		Country:   "Canada",
+	}
+
+	mockRepo.On("UpdateUser", mock.Anything, userID, updateData).Return(expectedUser, nil)
+	mockPublisher.On("Publish", "user.updated", mock.Anything).Return(nil)
+
+	// Convert updateData to JSON
+	jsonData, _ := json.Marshal(updateData)
+
+	// Create a request
+	req := httptest.NewRequest(http.MethodPut, "/users/"+userID+"?todo=1", bytes.NewReader(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	// Set Echo Context
+	c := e.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues(userID)
+
+	// Call Handler
+	handler := NewUserHandler(mockRepo, mockLogger, mockValidator, mockPublisher, mockErrorHandler, mockHasher)
+	err := handler.UpdateUser(c)
+
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	// Parse Response Body
+	var response model.User
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+
+	// Validate Response Fields
+	assert.Equal(t, expectedUser.FirstName, response.FirstName)
+	assert.Equal(t, expectedUser.Country, response.Country)
+
+	mockRepo.AssertExpectations(t)
+}
+
+// Test UpdateUser with Invalid JSON Body
+func TestUpdateUser_InvalidBody(t *testing.T) {
+	e := echo.New()
+
+	// Mock dependencies
+	mockRepo := new(repository.MockUserRepository)
+	mockPublisher := new(publisher.MockPublisher)
+	mockValidator := new(validator.MockValidator)
+	mockLogger := new(logging.MockLogger)
+	mockErrorHandler := new(errorhandler.MockErrorHandler)
+	mockHasher := new(security.MockPasswordHasher)
+
+	// Create Request with Invalid JSON
+	req := httptest.NewRequest(http.MethodPut, "/users/123", bytes.NewReader([]byte("{invalid_json")))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	// Set Echo Context
+	c := e.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues("123")
+
+	// Call Handler
+	handler := NewUserHandler(mockRepo, mockLogger, mockValidator, mockPublisher, mockErrorHandler, mockHasher)
+	err := handler.UpdateUser(c)
+
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+	// Validate Error Response
+	expectedResponse := `{"error":"Invalid request body"}`
+	assert.JSONEq(t, expectedResponse, rec.Body.String())
+
+	mockRepo.AssertExpectations(t)
+}
+
+// Test UpdateUser When User Not Found
+func TestUpdateUser_UserNotFound(t *testing.T) {
+	e := echo.New()
+
+	// Mock dependencies
+	mockRepo := new(repository.MockUserRepository)
+	mockPublisher := new(publisher.MockPublisher)
+	mockValidator := new(validator.MockValidator)
+	mockLogger := new(logging.MockLogger)
+	mockErrorHandler := new(errorhandler.MockErrorHandler)
+	mockHasher := new(security.MockPasswordHasher)
+
+	userID := "550e8400-e29b-41d4-a716-446655440000"
+	updateData := map[string]interface{}{
+		"first_name": "Johnny",
+	}
+
+	mockRepo.On("UpdateUser", mock.Anything, userID, updateData).Return(nil, errors.New("user not found"))
+
+	// Convert updateData to JSON
+	jsonData, _ := json.Marshal(updateData)
+
+	// Create Request
+	req := httptest.NewRequest(http.MethodPut, "/users/"+userID, bytes.NewReader(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	// Set Echo Context
+	c := e.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues(userID)
+
+	// Call Handler
+	handler := NewUserHandler(mockRepo, mockLogger, mockValidator, mockPublisher, mockErrorHandler, mockHasher)
+	err := handler.UpdateUser(c)
+
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+
+	// Validate Error Response
+	expectedResponse := `{"error":"user not found"}`
+	assert.JSONEq(t, expectedResponse, rec.Body.String())
+
+	mockRepo.AssertExpectations(t)
+}
+
 func TestDeleteUser_Success(t *testing.T) {
 	e := echo.New()
 	userID := uuid.New()
@@ -179,43 +367,4 @@ func TestDeleteUser_Success(t *testing.T) {
 	// Verify mock expectations
 	mockRepo.AssertExpectations(t)
 	mockPublisher.AssertExpectations(t)
-}
-
-func TestGetUsers_Success(t *testing.T) {
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/users?page=1&limit=2", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	// Mock dependencies
-	mockRepo := new(repository.MockUserRepository)
-	mockLogger := new(logging.MockLogger)
-	mockErrorHandler := new(errorhandler.MockErrorHandler)
-	mockHasher := new(security.MockPasswordHasher)
-
-	users := []model.User{
-		{ID: uuid.New(), FirstName: "John", LastName: "Doe", Email: "john.doe@example.com", Country: "USA"},
-		{ID: uuid.New(), FirstName: "Jane", LastName: "Doe", Email: "jane.doe@example.com", Country: "Canada"},
-	}
-
-	// Define expectations
-	mockRepo.On("GetUsers", mock.Anything, 1, 2, mock.Anything, "", "").Return(users, int64(2), nil)
-	mockLogger.On("Info", mock.Anything, "Fetched users with pagination and filters", mock.Anything).Return()
-
-	handler := NewUserHandler(mockRepo, mockLogger, nil, nil, mockErrorHandler, mockHasher)
-
-	err := handler.GetUsers(c)
-
-	// Assertions
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
-
-	var resp map[string]interface{}
-	err = json.Unmarshal(rec.Body.Bytes(), &resp)
-	assert.NoError(t, err)
-	assert.Equal(t, float64(2), resp["total_users"])
-
-	// Verify mock expectations
-	mockRepo.AssertExpectations(t)
-	mockLogger.AssertExpectations(t)
 }

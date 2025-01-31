@@ -5,6 +5,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"github.com/yakob-abada/go-rest-user/pkg/migration"
 	"gorm.io/gorm"
 	"log"
 	"os"
@@ -49,13 +50,7 @@ func TestMain(m *testing.M) {
 	log.Println("✅ Connected to test database!")
 
 	// Run migrations before tests
-	testDB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
-	err = testDB.AutoMigrate(&model.User{}) // Add more models as needed
-	if err != nil {
-		log.Fatalf("❌ Migration failed: %v", err)
-	}
-
-	log.Println("✅ Migrations completed successfully!")
+	migration.RunMigrations(testDB)
 
 	// Run tests
 	code := m.Run()
@@ -73,36 +68,29 @@ func cleanTestDatabase() {
 	testDB.Exec("TRUNCATE TABLE users RESTART IDENTITY CASCADE;")
 }
 
-func TestGormUserRepository_SaveUser(t *testing.T) {
+func TestGormUserRepository_GetUsers(t *testing.T) {
 	cleanTestDatabase()
-	repo := GormUserRepository{DB: testDB}
+	repo := NewGormUserRepository(testDB)
 	ctx := context.Background()
 
-	user := model.User{
-		ID:        uuid.New(),
-		FirstName: "John",
-		LastName:  "Doe",
-		Email:     "john.doe@example.com",
-		Password:  "hashedpassword123",
-		Country:   "USA",
+	users := []model.User{
+		{ID: uuid.New(), FirstName: "Mike", LastName: "Tyson", Email: "mike@example.com", Password: "pass123", Country: "USA"},
+		{ID: uuid.New(), FirstName: "Serena", LastName: "Williams", Email: "serena@example.com", Password: "pass123", Country: "USA"},
 	}
 
-	// Save user
-	err := repo.SaveUser(ctx, &user)
-	assert.NoError(t, err)
+	for _, u := range users {
+		assert.NoError(t, repo.SaveUser(ctx, &u))
+	}
 
-	// Retrieve user by email
-	storedUser, err := repo.GetUserByEmail(ctx, "john.doe@example.com")
+	// Fetch users
+	fetchedUsers, total, err := repo.GetUsers(ctx, 1, 10, map[string]string{"country": "USA"}, "first_name", "asc")
 	assert.NoError(t, err)
-	assert.NotNil(t, storedUser)
-	assert.Equal(t, "John", storedUser.FirstName)
-	assert.Equal(t, "Doe", storedUser.LastName)
-	assert.Equal(t, "john.doe@example.com", storedUser.Email)
+	assert.Len(t, fetchedUsers, 2)
+	assert.Equal(t, int64(2), total)
 }
-
 func TestGormUserRepository_GetUserByEmail(t *testing.T) {
 	cleanTestDatabase()
-	repo := GormUserRepository{DB: testDB}
+	repo := NewGormUserRepository(testDB)
 	ctx := context.Background()
 
 	user := model.User{
@@ -130,9 +118,65 @@ func TestGormUserRepository_GetUserByEmail(t *testing.T) {
 	assert.Nil(t, nonExistentUser)
 }
 
+func TestGormUserRepository_SaveUser(t *testing.T) {
+	cleanTestDatabase()
+	repo := NewGormUserRepository(testDB)
+	ctx := context.Background()
+
+	user := model.User{
+		ID:        uuid.New(),
+		FirstName: "John",
+		LastName:  "Doe",
+		Email:     "john.doe@example.com",
+		Password:  "hashedpassword123",
+		Country:   "USA",
+	}
+
+	// Save user
+	err := repo.SaveUser(ctx, &user)
+	assert.NoError(t, err)
+
+	// Retrieve user by email
+	storedUser, err := repo.GetUserByEmail(ctx, "john.doe@example.com")
+	assert.NoError(t, err)
+	assert.NotNil(t, storedUser)
+	assert.Equal(t, "John", storedUser.FirstName)
+	assert.Equal(t, "Doe", storedUser.LastName)
+	assert.Equal(t, "john.doe@example.com", storedUser.Email)
+}
+
+func TestUpdateUser(t *testing.T) {
+	cleanTestDatabase()
+	repo := NewGormUserRepository(testDB)
+	ctx := context.Background()
+
+	// Create a test user
+	user := model.User{
+		FirstName: "John",
+		LastName:  "Doe",
+		Email:     "john.doe@example.com",
+		Password:  "hashedpassword",
+		Country:   "USA",
+	}
+	// Save user
+	err := repo.SaveUser(ctx, &user)
+	assert.NoError(t, err)
+
+	// Update user
+	updatedData := map[string]interface{}{
+		"first_name": "Johnny",
+		"country":    "Canada",
+	}
+
+	updatedUser, err := repo.UpdateUser(ctx, user.ID.String(), updatedData)
+	assert.NoError(t, err)
+	assert.Equal(t, "Johnny", updatedUser.FirstName)
+	assert.Equal(t, "Canada", updatedUser.Country)
+}
+
 func TestGormUserRepository_DeleteUser(t *testing.T) {
 	cleanTestDatabase()
-	repo := GormUserRepository{DB: testDB}
+	repo := NewGormUserRepository(testDB)
 	ctx := context.Background()
 
 	user := model.User{
@@ -156,25 +200,4 @@ func TestGormUserRepository_DeleteUser(t *testing.T) {
 	deletedUser, err := repo.GetUserByEmail(ctx, "bob@example.com")
 	assert.NoError(t, err)
 	assert.Nil(t, deletedUser)
-}
-
-func TestGormUserRepository_GetUsers(t *testing.T) {
-	cleanTestDatabase()
-	repo := GormUserRepository{DB: testDB}
-	ctx := context.Background()
-
-	users := []model.User{
-		{ID: uuid.New(), FirstName: "Mike", LastName: "Tyson", Email: "mike@example.com", Password: "pass123", Country: "USA"},
-		{ID: uuid.New(), FirstName: "Serena", LastName: "Williams", Email: "serena@example.com", Password: "pass123", Country: "USA"},
-	}
-
-	for _, u := range users {
-		assert.NoError(t, repo.SaveUser(ctx, &u))
-	}
-
-	// Fetch users
-	fetchedUsers, total, err := repo.GetUsers(ctx, 1, 10, map[string]string{"country": "USA"}, "first_name", "asc")
-	assert.NoError(t, err)
-	assert.Len(t, fetchedUsers, 2)
-	assert.Equal(t, int64(2), total)
 }

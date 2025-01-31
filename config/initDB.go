@@ -19,12 +19,6 @@ func InitDB() *gorm.DB {
 		log.Println("Warning: No .env file found, using default environment variables")
 	}
 
-	env := os.Getenv("APP_ENV")
-	if env == "dev" {
-		log.Println("🛠️ Running database migrations for development...")
-		migration.RunMigrations()
-	}
-
 	// Read database environment variables
 	dbUser := os.Getenv("POSTGRES_USER")
 	dbPassword := os.Getenv("POSTGRES_PASSWORD")
@@ -45,6 +39,12 @@ func InitDB() *gorm.DB {
 	}
 
 	log.Println("✅ Database connected successfully!")
+
+	env := os.Getenv("APP_ENV")
+	if env == "dev" {
+		log.Println("🛠️ Running database migrations for development...")
+		migration.RunMigrations(db)
+	}
 
 	return db
 }

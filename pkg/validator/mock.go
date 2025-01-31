@@ -5,7 +5,7 @@ import (
 	"github.com/yakob-abada/go-rest-user/pkg/model"
 )
 
-// MockValidator implements the Validator interface for testing
+// MockValidator implements the validator interface for testing
 type MockValidator struct {
 	mock.Mock
 }

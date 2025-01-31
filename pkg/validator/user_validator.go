@@ -11,7 +11,7 @@ type UserValidator interface {
 	ValidateUser(user *model.User) error
 }
 
-// DefaultUserValidator implements Validator for user data validation
+// DefaultUserValidator implements validator for user data validation
 type DefaultUserValidator struct{}
 
 // NewDefaultUserValidator creates a new instance of DefaultUserValidator

@@ -6,7 +6,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/swaggo/echo-swagger"
 	_ "github.com/yakob-abada/go-rest-user/docs" // Import Swagger docs
-	"github.com/yakob-abada/go-rest-user/pkg/migration"
 )
 
 // @title User Management API
@@ -17,9 +16,6 @@ import (
 
 func main() {
 	e := echo.New()
-
-	// Run database migrations
-	migration.RunMigrations()
 
 	// Serve Swagger
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
