@@ -5,6 +5,8 @@ This project is a **Golang-based User Management API** using **Echo**, **Postgre
 
 This project follows the **Domain-Driven Design (DDD) pattern**, making it easy to maintain, test, and extend.
 
+Additionally, **parallelism and graceful shutdown** have been implemented to enhance scalability and reliability in production environments.
+
 ---
 
 ## ⚡️ Quick Start
