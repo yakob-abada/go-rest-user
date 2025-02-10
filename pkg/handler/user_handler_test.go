@@ -35,7 +35,7 @@ func TestGetUsers_Success(t *testing.T) {
 	mockErrorHandler := new(errorhandler.MockErrorHandler)
 	mockHasher := new(security.MockPasswordHasher)
 
-	users := []model.User{
+	users := []*model.User{
 		{ID: uuid.New(), FirstName: "John", LastName: "Doe", Email: "john.doe@example.com", Country: "USA"},
 		{ID: uuid.New(), FirstName: "Jane", LastName: "Doe", Email: "jane.doe@example.com", Country: "Canada"},
 	}

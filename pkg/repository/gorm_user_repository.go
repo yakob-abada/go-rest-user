@@ -21,8 +21,8 @@ func NewGormUserRepository(db *gorm.DB) *GormUserRepository {
 }
 
 // GetUsers retrieves paginated users with filtering and sorting
-func (repo *GormUserRepository) GetUsers(ctx context.Context, page, limit int, filters map[string]string, sortBy, order string) ([]model.User, int64, error) {
-	var users []model.User
+func (repo *GormUserRepository) GetUsers(ctx context.Context, page, limit int, filters map[string]string, sortBy, order string) ([]*model.User, int64, error) {
+	var users []*model.User
 	var total int64
 
 	query := repo.db.WithContext(ctx).Model(&model.User{})

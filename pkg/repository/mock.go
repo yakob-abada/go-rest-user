@@ -14,9 +14,9 @@ type MockUserRepository struct {
 }
 
 // GetUsers mocks the GetUsers method
-func (m *MockUserRepository) GetUsers(ctx context.Context, page, limit int, filters map[string]string, sortBy, order string) ([]model.User, int64, error) {
+func (m *MockUserRepository) GetUsers(ctx context.Context, page, limit int, filters map[string]string, sortBy, order string) ([]*model.User, int64, error) {
 	args := m.Called(ctx, page, limit, filters, sortBy, order)
-	return args.Get(0).([]model.User), args.Get(1).(int64), args.Error(2)
+	return args.Get(0).([]*model.User), args.Get(1).(int64), args.Error(2)
 }
 
 // GetUserByID mocks the GetUserByID method

@@ -3,10 +3,10 @@ package model
 import "github.com/google/uuid"
 
 type UserListResponseList struct {
-	Page  int            `json:"page"`
-	Limit int            `json:"limit"`
-	Total int64          `json:"total"`
-	Users []UserResponse `json:"users"`
+	Page  int             `json:"page"`
+	Limit int             `json:"limit"`
+	Total int64           `json:"total"`
+	Users []*UserResponse `json:"users"`
 }
 
 type UserResponse struct {

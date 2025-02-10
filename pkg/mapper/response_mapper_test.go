@@ -12,7 +12,7 @@ import (
 func TestUserResponseMapper(t *testing.T) {
 	userID := uuid.New()
 
-	user := model.User{
+	user := &model.User{
 		ID:        userID,
 		FirstName: "John",
 		LastName:  "Doe",
@@ -21,7 +21,7 @@ func TestUserResponseMapper(t *testing.T) {
 		Country:   "USA",
 	}
 
-	expectedResponse := model.UserResponse{
+	expectedResponse := &model.UserResponse{
 		ID:        userID,
 		FirstName: "John",
 		LastName:  "Doe",
@@ -40,7 +40,7 @@ func TestUsersResponseMapper(t *testing.T) {
 	userID1 := uuid.New()
 	userID2 := uuid.New()
 
-	users := []model.User{
+	users := []*model.User{
 		{
 			ID:        userID1,
 			FirstName: "John",
@@ -59,7 +59,7 @@ func TestUsersResponseMapper(t *testing.T) {
 		},
 	}
 
-	expectedResponses := []model.UserResponse{
+	expectedResponses := []*model.UserResponse{
 		{
 			ID:        userID1,
 			FirstName: "John",

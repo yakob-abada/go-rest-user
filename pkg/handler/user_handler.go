@@ -118,8 +118,8 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 func (h *UserHandler) SaveUser(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	var user model.User
-	if err := c.Bind(&user); err != nil {
+	user := new(model.User)
+	if err := c.Bind(user); err != nil {
 		return h.errorHandler.HandleBadRequest(ctx, c, "Invalid request payload", map[string]interface{}{
 			"endpoint": "SaveUser",
 			"error":    err.Error(),
@@ -127,7 +127,7 @@ func (h *UserHandler) SaveUser(c echo.Context) error {
 	}
 
 	// Validate user data
-	if err := h.validator.ValidateUser(&user); err != nil {
+	if err := h.validator.ValidateUser(user); err != nil {
 		return h.errorHandler.HandleBadRequest(ctx, c, "Validation failed", map[string]interface{}{
 			"user_email": user.Email,
 			"error":      err.Error(),
@@ -161,7 +161,7 @@ func (h *UserHandler) SaveUser(c echo.Context) error {
 	user.Password = hashedPassword
 
 	// Save the user
-	if err := h.repo.SaveUser(ctx, &user); err != nil {
+	if err := h.repo.SaveUser(ctx, user); err != nil {
 		return h.errorHandler.HandleInternalServerError(ctx, c, "Failed to save user", map[string]interface{}{
 			"user_email": user.Email,
 			"error":      err.Error(),
@@ -221,7 +221,7 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, mapper.UserResponseMapper(*user))
+	return c.JSON(http.StatusOK, mapper.UserResponseMapper(user))
 }
 
 // DeleteUser removes a user by ID
